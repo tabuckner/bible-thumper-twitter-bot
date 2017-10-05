@@ -37,7 +37,6 @@ function tweeted(err, data, response) {
 }
 
 //beginning of bible verse code
-
 var request = require("request")
 
 var verse;
@@ -45,11 +44,11 @@ var url = "https://labs.bible.org/api/?" +
   "passage=random" +
   "&type=json";
 
-
 var requestParams = {
   url: url,
   json: true
 }
+
 request(requestParams, requestHandler)
 
 function requestHandler(error, response, body) {
@@ -66,8 +65,4 @@ function requestHandler(error, response, body) {
     var tweet = {status: verse}
     T.post('statuses/update', tweet, tweeted);
   }
-}
-
-function testScope() {
-  console.log(verse);
 }
