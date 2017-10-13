@@ -1,4 +1,9 @@
 console.log('The bot is starting...');
+// var myInterval = (1000*60*60*3);
+var myInterval = (1000*60);
+console.log('the tweets will go out once every ' + (myInterval/(1000*60)) + ' minute(s)');
+
+setInterval(bibleTrendTweet, myInterval);
 
 var Twit = require('twit');
 var config = require('./config');
@@ -12,14 +17,15 @@ var sParams = {
   count: 10
 }
 
+// search for shit...not in use
 //T.get('search/tweets', sParams, gotSearch);
 
-function gotSearch(err, data, response) {
-  var tweets = data.statuses;
-  for (var i = 0; i < tweets.length; i++) {
-    console.log(tweets[i].text);
-  }
-}
+// function gotSearch(err, data, response) {
+//   var tweets = data.statuses;
+//   for (var i = 0; i < tweets.length; i++) {
+//     console.log(tweets[i].text);
+//   }
+// }
 
 var topTrend;
 var topHash;
@@ -29,7 +35,9 @@ var tParams = {
   //woeid lookup http://woeid.rosselliot.co.nz/lookup/united%20states
 }
 
-T.get('trends/place', tParams, gotTrends);
+function bibleTrendTweet () {
+  T.get('trends/place', tParams, gotTrends);
+}
 
 function gotTrends(err, data, response) {
   //console.log(data);
@@ -52,30 +60,30 @@ function gotTrends(err, data, response) {
   // console.log(tCleanedArray[0]); //bingo bitch.
   topTrend = tCleanedArray[0];
   topHash = topTrend.name;
-  console.log(topHash);
+  // console.log(topHash);
   // console.log(topTrend.volume);
+  getBibleVerse();
 }
 
 
-var tweet = {
-  status: verse
-}
+var tweet;
 
 //T.post('statuses/update', tweet, tweeted);
 
 function tweeted(err, data, response) {
   if (err) {
     console.log('Something went wrong: ' + err);
+    // testErr(err);
+    bibleTrendTweet();
   } else {
     console.log('It worked!');
   }
-  //console.log(response);
+  // console.log(response); //annoying but good for testing.
 }
 
 //beginning of bible verse code
 var request = require("request")
 
-var verse;
 var url = "https://labs.bible.org/api/?" +
   "passage=random" +
   "&type=json";
@@ -84,21 +92,35 @@ var requestParams = {
   url: url,
   json: true
 }
+var verse;
 
-//request(requestParams, requestHandler)
+function getBibleVerse () {
+  request(requestParams, requestHandler);
+}
 
 function requestHandler(error, response, body) {
 
   if (!error && response.statusCode === 200) {
     var verseObject = body[0];
-    console.log(verseObject) // Print the object of json response
+    // console.log(verseObject) // Print the object of json response
     var verseBook = verseObject.bookname;
     var verseChapter = verseObject.chapter;
     var verseVerse = verseObject.verse;
     var verseText = verseObject.text;
     var versePosition = verseBook + " " + verseChapter + ":" + verseVerse;
-    verse = versePosition + " // " + verseText;
-    var tweet = { status: verse }
+    verse = versePosition + " // " + verseText + " " + topHash;
+    // console.log(verse); //used for testing
+    tweet = {
+      status: verse
+    }
+    // console.log(tweet); //did we get the tweet object?
     T.post('statuses/update', tweet, tweeted);
+  }
+}
+
+function testErr(error) { //function not working? 
+  if (error === "Status is over 140 characters.") {//probably this test criteria
+    console.log('we should try again...');
+    bibleTrendTweet();
   }
 }
