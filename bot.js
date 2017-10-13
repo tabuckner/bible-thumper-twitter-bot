@@ -13,7 +13,28 @@ downloadImage();
 function downloadImage() {
   download('https://picsum.photos/1920/1080?random', 'img').then(() => {
     console.log('done!');
+    uploadImage();
   });
+}
+
+var fs = require('fs');
+var path = require('path');
+var filename = 'img/1080.jpg';
+var imgParams = {
+  encoding: 'base64',
+}
+var b64 = fs.readFileSync(filename, imgParams)
+var uploadID;
+
+function uploadImage () {
+  T.post('media/upload', {media_data: b64}, uploaded); 
+}
+
+function uploaded(err, data, response) {
+  console.log(data);
+  uploadID = data.media_id_string;
+  console.log(uploadID);
+  bibleTrendTweet();
 }
 
 var Twit = require('twit');
@@ -122,7 +143,8 @@ function requestHandler(error, response, body) {
     verse = versePosition + " // " + verseText + " " + topHash;
     // console.log(verse); //used for testing
     tweet = {
-      status: verse
+      status: verse,
+      media_ids: uploadID
     }
     // console.log(tweet); //did we get the tweet object?
     T.post('statuses/update', tweet, tweeted);
