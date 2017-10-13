@@ -1,7 +1,7 @@
 console.log('The bot is starting...');
-// var myInterval = (1000*60*60*3);
-var myInterval = (1000 * 60);
-console.log('the tweets will go out once every ' + (myInterval / (1000 * 60)) + ' minute(s)');
+var hourMultiplier = (1000 * 60 * 60);
+var myInterval = (hourMultiplier*3);
+console.log('the tweets will go out once every ' + (myInterval / (1000 * 60)) + ' minute(s), or every ' + (myInterval / (1000 * 60 * 60)) + ' hour(s)');
 
 // setInterval(bibleTrendTweet, myInterval);
 
@@ -9,10 +9,11 @@ var fs = require('fs');
 var download = require('download');
 
 downloadImage();
+setInterval(downloadImage, myInterval);
 
 function downloadImage() {
   download('https://picsum.photos/1920/1080?random', 'img').then(() => {
-    console.log('done!');
+    console.log('Downloaded a new image');
     uploadImage();
   });
 }
@@ -23,15 +24,16 @@ var filename = 'img/1080.jpg';
 var imgParams = {
   encoding: 'base64',
 }
-var b64 = fs.readFileSync(filename, imgParams)
+var b64;
 var uploadID;
 
-function uploadImage () {
-  T.post('media/upload', {media_data: b64}, uploaded); 
+function uploadImage() {
+  b64 = fs.readFileSync(filename, imgParams)
+  T.post('media/upload', { media_data: b64 }, uploaded);
 }
 
 function uploaded(err, data, response) {
-  console.log(data);
+  console.log('Uploaded the image');
   uploadID = data.media_id_string;
   console.log(uploadID);
   bibleTrendTweet();
