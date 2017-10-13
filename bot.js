@@ -6,20 +6,56 @@ var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 var T = new Twit(config);
 
-var params = {
+var sParams = {
   q: 'eleven',
   geocode: '30.2672 97.7431 100mi',
   count: 10
 }
 
-//T.get('search/tweets', params, gotData);
+//T.get('search/tweets', sParams, gotSearch);
 
-function gotData(err, data, response) {
+function gotSearch(err, data, response) {
   var tweets = data.statuses;
   for (var i = 0; i < tweets.length; i++) {
     console.log(tweets[i].text);
   }
 }
+
+var topTrend;
+var topHash;
+var tCleanedArray = [];
+var tParams = {
+  id: '23424977' //united states WOE ID
+  //woeid lookup http://woeid.rosselliot.co.nz/lookup/united%20states
+}
+
+T.get('trends/place', tParams, gotTrends);
+
+function gotTrends(err, data, response) {
+  //console.log(data);
+  var trends = data[0].trends;
+  for (i = 0; i < trends.length; i++) {
+    var name = trends[i].name;
+    var volume = trends[i].tweet_volume;
+    if (volume !== null && name.includes('#')) {
+      var obj = {
+        "name": name,
+        "volume": volume
+      };
+      tCleanedArray.push(obj); //push to an array to be analyzed. 
+    }
+  }
+  //pick out the top trending at that moment and log
+  tCleanedArray.sort(function (b, a) {
+    return a.volume - b.volume
+  });
+  // console.log(tCleanedArray[0]); //bingo bitch.
+  topTrend = tCleanedArray[0];
+  topHash = topTrend.name;
+  console.log(topHash);
+  // console.log(topTrend.volume);
+}
+
 
 var tweet = {
   status: verse
@@ -49,7 +85,7 @@ var requestParams = {
   json: true
 }
 
-request(requestParams, requestHandler)
+//request(requestParams, requestHandler)
 
 function requestHandler(error, response, body) {
 
@@ -62,7 +98,7 @@ function requestHandler(error, response, body) {
     var verseText = verseObject.text;
     var versePosition = verseBook + " " + verseChapter + ":" + verseVerse;
     verse = versePosition + " // " + verseText;
-    var tweet = {status: verse}
+    var tweet = { status: verse }
     T.post('statuses/update', tweet, tweeted);
   }
 }
