@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node bot.js",
-    "stop" : "node bot.stop.js"
+    "stop": "node bot.stop.js"
   },
   "keywords": [
     "twitter",
@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "download": "^6.2.5",
     "request": "^2.83.0",
     "twit": "^2.2.9",
     "xmlhttprequest": "^1.8.0"

@@ -1,9 +1,20 @@
 console.log('The bot is starting...');
 // var myInterval = (1000*60*60*3);
-var myInterval = (1000*60);
-console.log('the tweets will go out once every ' + (myInterval/(1000*60)) + ' minute(s)');
+var myInterval = (1000 * 60);
+console.log('the tweets will go out once every ' + (myInterval / (1000 * 60)) + ' minute(s)');
 
-setInterval(bibleTrendTweet, myInterval);
+// setInterval(bibleTrendTweet, myInterval);
+
+var fs = require('fs');
+var download = require('download');
+
+downloadImage();
+
+function downloadImage() {
+  download('https://picsum.photos/1920/1080?random', 'img').then(() => {
+    console.log('done!');
+  });
+}
 
 var Twit = require('twit');
 var config = require('./config');
@@ -35,7 +46,7 @@ var tParams = {
   //woeid lookup http://woeid.rosselliot.co.nz/lookup/united%20states
 }
 
-function bibleTrendTweet () {
+function bibleTrendTweet() {
   T.get('trends/place', tParams, gotTrends);
 }
 
@@ -94,7 +105,7 @@ var requestParams = {
 }
 var verse;
 
-function getBibleVerse () {
+function getBibleVerse() {
   request(requestParams, requestHandler);
 }
 
