@@ -6,8 +6,11 @@ var download = require('download');
 var fs = require('fs');
 var path = require('path');
 var request = require("request")
+const replyOptions = require('./replies.js');
 
 //Global vars for Tweeting
+var myScreenName = 'HillBillyNums';
+var typingTime = 3000;
 var T = new Twit(config);
 var verse;
 var sParams = {
@@ -42,6 +45,9 @@ var requestParams = {
 //Global Vars for Following
 var toFollowBack = [];
 
+//Global Vars for SStreaming ReTweet
+var stream = T.stream('user');
+
 //Intervals for timed events
 var hourMultiplier = (1000 * 60 * 60);
 var randomTweetInterval = (hourMultiplier * 3);
@@ -53,10 +59,75 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-downloadImage();
-periodicalFollowIntervalHandler();
-setInterval(downloadImage, randomTweetInterval);
-setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
+stream.on('favorite', favorited);
+// downloadImage();
+// periodicalFollowIntervalHandler();
+// setInterval(downloadImage, randomTweetInterval);
+// setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
+
+/* FUNCTION SECTION
+FAVOIRITE ACTION
+*/
+
+function favorited(eventMsg) {
+  console.log('Favorited event!');
+  // console.log(eventMsg.source);
+  var id = eventMsg.source.id;
+  var screenName = eventMsg.source.screen_name;
+  var statusIdStr = eventMsg.target_object.id_str;
+  var json = JSON.stringify(eventMsg);
+  // fs.writeFile('favorited.json', json); 
+
+  replyTo(screenName, statusIdStr);
+}
+
+function replyTo(favoriter, target) {
+  const replyOptions = require('./replies.js');
+
+  if (favoriter !== myScreenName) {
+    var txt = '@' + favoriter + ' ';
+    txt += randomResponse(replyOptions);
+
+    console.log('Attempting to post: ' + txt);
+    tweetIt(txt, target);
+  }
+}
+
+function randomResponse(choices) {
+  //takes an array of strings
+  var choice = Math.floor(Math.random() * choices.length);
+  return choices[choice];
+}
+
+function tweetIt(message, statusId) {
+  var tweet = {
+    status: message,
+    in_reply_to_status_id: statusId,
+    auto_populate_reply_metadata: true
+  }
+  T.post('statuses/update', tweet, callback);
+
+  function callback(err, data, response) {
+    if (err) {
+      if (err.code == '186') {
+        console.log('Status/@mention combination is too long. Trying a different response');
+        tweetIt(message, statusId);
+      } else {
+        console.log('Function tweetIt encountered an error...')
+        console.log(err);
+        console.log('=================');
+        tweetIt(message, statusId);
+      }
+    } else {
+      console.log('Successfully posted: ' + message);
+    }
+  }
+
+}
+
+/* END FUNCTION SECTION
+FAVORITE ACTION
+*/
 
 /* FUNCTION SECTION
 Download Image
@@ -136,7 +207,8 @@ function followBack(object) {
           successful++;
           if (err) {
             console.log('couldnt fuckin do it bro...');
-            console.log(err);
+            // console.log(err.errors[0].code);
+            twitterErrorLog(err);
           }
         })
       }
@@ -149,7 +221,14 @@ function followBack(object) {
 /* END FUNCTION SECTION
 DAILY FOLLOW BACK
  */
-
+function twitterErrorLog(error) {
+  fs.writeFile('error.json', error, function (err) {
+    if (err) {
+      console.log('FS Write File enountered an error...');
+      console.log(err);
+    }
+  });
+}
 
 
 /* FUNCTION SECTION
@@ -245,3 +324,18 @@ function requestHandler(error, response, body) {
 /* END FUNCTION SECTION
 Random Bible Verse Tweet
 */
+
+//TOOLS
+function testArrayLength(array, limit) { //small function to test an array of strings for a char limit (e.g. Twitter's 140)
+  for (i = 0; i < array.length; i++) {
+    if (array[i].length > limit) {
+      console.log('--------------');
+      console.log('Line ' + (i + 2));
+      console.log(array[i].length + '/' + limit + '. Please remove ' + (array[i].length - limit) + 'chars');
+      console.log(array[i]);
+      console.log('--------------');
+    } else {
+      console.log('The array tested has passed.');
+    }
+  }
+}
