@@ -40,7 +40,7 @@ module.exports = [
   'I\'ve read the last page of the Bible, it\'s all going to turn out all right.',
   'People who hate God take it out on innocent people.',
   'I believe if you keep your faith, you keep your trust, you keep the right attitude, if you’re grateful, you’ll see God open up new doors.',
-  'Life’s too short to spend it trying to keep others happy. You can’t please everyone. To fulfill your destiny, stay true to your heart.',
+  'Life\'s too short to spend it trying to keep others happy. You can’t please everyone. To fulfill your destiny, stay true to your heart.',
   'Nothing in life has happened to you. It’s happened for you. Everything has helped make you into who you are.',
   'God would not have put a dream in your heart if He had not already given you everything you need to fulfill it.',
   'If you have your health, if you have people in your life to love, you are blessed. Slow down and enjoy the simple things in life.',
