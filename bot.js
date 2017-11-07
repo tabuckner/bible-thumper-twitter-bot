@@ -13,7 +13,8 @@ var myScreenName = 'HillBillyNums';
 var typingTime = 3000;
 var T = new Twit(config);
 var verse;
-var sParams = {
+var favoriteResponse;
+var sParfams = {
   q: 'eleven',
   geocode: '30.2672 97.7431 100mi',
   count: 10
@@ -59,44 +60,46 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-stream.on('favorite', favorited);
-// downloadImage();
-// periodicalFollowIntervalHandler();
-// setInterval(downloadImage, randomTweetInterval);
-// setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
+stream.on('favorite', gotAFavorite);
+downloadImage();
+periodicalFollowIntervalHandler();
+setInterval(downloadImage, randomTweetInterval);
+setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
 
 /* FUNCTION SECTION
 FAVOIRITE ACTION
 */
-
-function favorited(eventMsg) {
-  console.log('Favorited event!');
+function gotAFavorite(eventMsg) {
+  console.log('gotAFavorite event!');
   // console.log(eventMsg.source);
   var id = eventMsg.source.id;
   var screenName = eventMsg.source.screen_name;
   var statusIdStr = eventMsg.target_object.id_str;
   var json = JSON.stringify(eventMsg);
-  // fs.writeFile('favorited.json', json); 
+  // fs.writeFile('gotAFavorite.json', json); 
 
-  replyTo(screenName, statusIdStr);
+  console.log('Waiting 15 seconds to send reply tweet...');
+  setTimeout(function() {
+    replyTo(screenName, statusIdStr);
+  }, 15000);
+  // replyTo(screenName, statusIdStr);
 }
 
 function replyTo(favoriter, target) {
   const replyOptions = require('./replies.js');
 
   if (favoriter !== myScreenName) {
-    var txt = '@' + favoriter + ' ';
-    txt += randomResponse(replyOptions);
-
-    console.log('Attempting to post: ' + txt);
-    tweetIt(txt, target);
+    randomResponse(replyOptions);
+    console.log('Attempting to post: ' + favoriteResponse);
+    tweetIt(favoriteResponse, target);
   }
 }
 
 function randomResponse(choices) {
   //takes an array of strings
   var choice = Math.floor(Math.random() * choices.length);
-  return choices[choice];
+  favoriteResponse = choices[choice];
+
 }
 
 function tweetIt(message, statusId) {
@@ -105,26 +108,27 @@ function tweetIt(message, statusId) {
     in_reply_to_status_id: statusId,
     auto_populate_reply_metadata: true
   }
-  T.post('statuses/update', tweet, callback);
+  T.post('statuses/update', tweet, tweetedIt);
 
-  function callback(err, data, response) {
+  function tweetedIt(err, data, response) {
     if (err) {
       if (err.code == '186') {
+        console.log('Twitter Says: ' + err.message);
         console.log('Status/@mention combination is too long. Trying a different response');
+        randomResponse(replyOptions);
         tweetIt(message, statusId);
       } else {
         console.log('Function tweetIt encountered an error...')
-        console.log(err);
+        console.log('Twitter Error Code: ' + err.code);
+        console.log('Twitter Error Message: ' + err.message);
         console.log('=================');
         tweetIt(message, statusId);
       }
     } else {
-      console.log('Successfully posted: ' + message);
+      console.log("Successfully Tweeted: \"" + data.text + "\" to " + data.in_reply_to_screen_name);
     }
   }
-
 }
-
 /* END FUNCTION SECTION
 FAVORITE ACTION
 */
@@ -148,12 +152,12 @@ function uploaded(err, data, response) {
   console.log('Uploaded the image');
   uploadID = data.media_id_string;
   console.log(uploadID);
-  bibleTrendTweet();
+  getTrendingTopics();
 }
 
 /* END FUNCTION SECTION
 Download Image
- */
+*/
 
 /* FUNCTION SECTION
 DAILY FOLLOW BACK
@@ -200,7 +204,7 @@ function followBack(object) {
     T.post('friendships/create', { id: thisID }, function (err, data, response) {
       if (!err) {
         successful++;
-        //NEED TO ADD SOMETHING IN HERE THAT LETS ME GET A READ OUT OF WHO I JUST FAVORITED
+        //NEED TO ADD SOMETHING IN HERE THAT LETS ME GET A READ OUT OF WHO I JUST gotAFavorite
         // console.log('Successfully followed @' + thisUser + '; User ID: ' + thisID);
       } else {
         T.post('friendships/create', { screen_name: thisUser }, function (err, data, response) {
@@ -240,25 +244,11 @@ FOLLOW BACK STREAM
 */
 
 
-// search for shit...not in use
-//T.get('search/tweets', sParams, gotSearch);
-
-// function gotSearch(err, data, response) {
-//   var tweets = data.statuses;
-//   for (var i = 0; i < tweets.length; i++) {
-//     console.log(tweets[i].text);
-//   }
-// }
-
-/* FUNCTION SECTION
-Random Bible Verse Tweet
-*/
-
-function bibleTrendTweet() {
-  T.get('trends/place', tParams, gotTrends);
+function getTrendingTopics() {
+  T.get('trends/place', tParams, gotTrendingTopics);
 }
 
-function gotTrends(err, data, response) {
+function gotTrendingTopics(err, data, response) {
   //console.log(data);
   var trends = data[0].trends;
   for (i = 0; i < trends.length; i++) {
@@ -276,27 +266,12 @@ function gotTrends(err, data, response) {
   tCleanedArray.sort(function (b, a) {
     return a.volume - b.volume
   });
-  // console.log(tCleanedArray[0]); //bingo bitch.
   topTrend = tCleanedArray[0];
   topHash = topTrend.name;
-  // console.log(topHash);
-  // console.log(topTrend.volume);
-  getBibleVerse();
+  getRandomBibleVerse();
 }
 
-function tweeted(err, data, response) {
-  if (err) {
-    console.log('Something went wrong: ' + err);
-    // testErr(err);
-    bibleTrendTweet();
-  } else {
-    console.log('It worked!');
-  }
-  // console.log(response); //annoying but good for testing.
-}
-
-
-function getBibleVerse() {
+function getRandomBibleVerse() {
   request(requestParams, requestHandler);
 }
 
@@ -321,6 +296,17 @@ function requestHandler(error, response, body) {
   }
 }
 
+function tweeted(err, data, response) {
+  if (err) {
+    console.log('Something went wrong: ' + err);
+    // testErr(err);
+    getTrendingTopics();
+  } else {
+    console.log('It worked!');
+  }
+  // console.log(response); //annoying but good for testing.
+}
+
 /* END FUNCTION SECTION
 Random Bible Verse Tweet
 */
@@ -338,4 +324,13 @@ function testArrayLength(array, limit) { //small function to test an array of st
       console.log('The array tested has passed.');
     }
   }
+}
+
+function saveTwitterData(filename, object) {
+  var content = JSON.stringify(object);
+  fs.writeFile(filename, content, 'utf8', function (err) {
+    if (err) {
+      console.log(err)
+    }
+  });
 }
