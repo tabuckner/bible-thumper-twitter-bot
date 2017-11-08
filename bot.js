@@ -70,25 +70,26 @@ setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
 FAVOIRITE ACTION
 */
 function gotAFavorite(eventMsg) {
-  console.log('gotAFavorite event!');
   // console.log(eventMsg.source);
   var id = eventMsg.source.id;
   var screenName = eventMsg.source.screen_name;
   var statusIdStr = eventMsg.target_object.id_str;
   var json = JSON.stringify(eventMsg);
-  // fs.writeFile('gotAFavorite.json', json); 
+  // saveTwitterData('favorite.json', eventMsg);  
+  console.log('Got a Favorite from: ' + screenName);
 
   console.log('Waiting 15 seconds to send reply tweet...');
   setTimeout(function() {
     replyTo(screenName, statusIdStr);
   }, 15000);
-  // replyTo(screenName, statusIdStr);
 }
 
 function replyTo(favoriter, target) {
   const replyOptions = require('./replies.js');
 
   if (favoriter !== myScreenName) {
+    favoriteResponse = "@" + favoriter + " ";
+    console.log(favoriteResponse);
     randomResponse(replyOptions);
     console.log('Attempting to post: ' + favoriteResponse);
     tweetIt(favoriteResponse, target);
@@ -96,9 +97,11 @@ function replyTo(favoriter, target) {
 }
 
 function randomResponse(choices) {
+  console.log(favoriteResponse);
   //takes an array of strings
   var choice = Math.floor(Math.random() * choices.length);
-  favoriteResponse = choices[choice];
+  favoriteResponse += choices[choice];
+  console.log(favoriteResponse);
 
 }
 
@@ -125,7 +128,7 @@ function tweetIt(message, statusId) {
         tweetIt(message, statusId);
       }
     } else {
-      console.log("Successfully Tweeted: \"" + data.text + "\" to " + data.in_reply_to_screen_name);
+      console.log("Successfully Tweeted: \"" + data.text + "\"");
     }
   }
 }
