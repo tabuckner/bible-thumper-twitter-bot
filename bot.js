@@ -43,10 +43,7 @@ var requestParams = {
   json: true
 }
 
-//Global Vars for Following
-var toFollowBack = [];
-
-//Global Vars for SStreaming ReTweet
+//Global Vars for Streaming ReTweet
 var stream = T.stream('user');
 
 //Intervals for timed events
@@ -60,14 +57,51 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-stream.on('favorite', gotAFavorite);
-downloadImage();
-periodicalFollowIntervalHandler();
-setInterval(downloadImage, randomTweetInterval);
-setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
+stream.on('follow', followHandler);
+// stream.on('favorite', gotAFavorite);
+// downloadImage();
+// periodicalFollowIntervalHandler();
+// setInterval(downloadImage, randomTweetInterval);
+// setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
 
 /* FUNCTION SECTION
-FAVOIRITE ACTION
+FOLLOW ACTION
+*/
+
+function followHandler(eventMsg) {
+  var screen_name = eventMsg.source.screen_name;
+  var id_str = eventMsg.source.id_str;
+
+  if (screen_name !== myScreenName) {
+    console.log(screen_name + ' is a now a follower! Attempting to follow back. in 30 seconds.');
+    setTimeout(function () {
+      followThemBack(screen_name, id_str)
+    }, (30 * 1000));
+  }
+}
+
+function followThemBack(screenName, idStr) {
+  T.post('friendships/create', { screen_name: screenName }, function (err, data, response) {
+    if (!err) {
+      if (data.following == true) {
+        console.log('We are now following ' + data.screen_name);
+      }
+      console.log('')
+      saveTwitterData('followBackData.json', data);
+    } else if (err) {
+      saveTwitterData('followBackError.json', err);
+    } else {
+      console.log(response);
+    }
+  })
+}
+
+/* END FUNCTION SECTION
+FOLLOW ACTION
+*/
+
+/* FUNCTION SECTION
+FAVORITE ACTION
 */
 function gotAFavorite(eventMsg) {
   // console.log(eventMsg.source);
@@ -79,7 +113,7 @@ function gotAFavorite(eventMsg) {
   console.log('Got a Favorite from: ' + screenName);
 
   console.log('Waiting 15 seconds to send reply tweet...');
-  setTimeout(function() {
+  setTimeout(function () {
     replyTo(screenName, statusIdStr);
   }, 15000);
 }
@@ -162,89 +196,8 @@ function uploaded(err, data, response) {
 Download Image
 */
 
-/* FUNCTION SECTION
-DAILY FOLLOW BACK
- */
 
-function periodicalFollowIntervalHandler() {
-  getNeedFollows(1, function (data) {
-    followBack(data);
-  });
-}
-
-function getNeedFollows(e, callback) {
-  var unused = e;
-  T.get('followers/list', { count: 200 }, function (err, data, response) {
-    var userArray = data.users;
-    var userCount = userArray.length;
-
-    if (err) {
-      console.log(err);
-    } else {
-
-      for (i = 0; i < userCount; i++) {
-        var id = userArray[i].id;
-        var screenName = userArray[i].screen_name;
-        var isFollowing = userArray[i].following;
-
-        if (isFollowing !== true) {
-          var thisGuy = { id: id, screenName: screenName, isFollowing: isFollowing }
-          toFollowBack.push(thisGuy);
-        }
-      }
-    }
-    callback(toFollowBack);
-  })
-}
-
-function followBack(object) {
-  var successful = 0;
-  console.log('Attempting to follow ' + object.length + ' users...');
-
-  for (i = 0; i < object.length; i++) {
-    var thisID = object[i].id;
-    var thisUser = object[i].screenName;
-    T.post('friendships/create', { id: thisID }, function (err, data, response) {
-      if (!err) {
-        successful++;
-        //NEED TO ADD SOMETHING IN HERE THAT LETS ME GET A READ OUT OF WHO I JUST gotAFavorite
-        // console.log('Successfully followed @' + thisUser + '; User ID: ' + thisID);
-      } else {
-        T.post('friendships/create', { screen_name: thisUser }, function (err, data, response) {
-          successful++;
-          if (err) {
-            console.log('couldnt fuckin do it bro...');
-            // console.log(err.errors[0].code);
-            twitterErrorLog(err);
-          }
-        })
-      }
-      //fractional report doesnt work here
-    });
-    //fractional report doesnt work here
-  }
-  console.log('Followed ' + successful + '/' + object.length)
-}
-/* END FUNCTION SECTION
-DAILY FOLLOW BACK
- */
-function twitterErrorLog(error) {
-  fs.writeFile('error.json', error, function (err) {
-    if (err) {
-      console.log('FS Write File enountered an error...');
-      console.log(err);
-    }
-  });
-}
-
-
-/* FUNCTION SECTION
-FOLLOW BACK STREAM 
-*/
-
-/* END FUNCTION SECTION
-FOLLOW BACK STREAM 
-*/
+/* WHAT SECTION IS THIS??? */
 
 
 function getTrendingTopics() {
@@ -331,7 +284,7 @@ function testArrayLength(array, limit) { //small function to test an array of st
 
 function saveTwitterData(filename, object) {
   var content = JSON.stringify(object);
-  fs.writeFile(filename, content, 'utf8', function (err) {
+  fs.writeFile('logs/' + filename, content, 'utf8', function (err) {
     if (err) {
       console.log(err)
     }
