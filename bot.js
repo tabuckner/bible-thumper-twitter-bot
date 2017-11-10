@@ -121,7 +121,6 @@ function replyTo(favoriter, target) {
 
   if (favoriter !== myScreenName) {
     favoriteResponse = "@" + favoriter + " ";
-    console.log(favoriteResponse);
     randomResponse(replyOptions);
     console.log('Attempting to post: ' + favoriteResponse);
     tweetIt(favoriteResponse, target);
@@ -129,12 +128,9 @@ function replyTo(favoriter, target) {
 }
 
 function randomResponse(choices) {
-  console.log(favoriteResponse);
   //takes an array of strings
   var choice = Math.floor(Math.random() * choices.length);
   favoriteResponse += choices[choice];
-  console.log(favoriteResponse);
-
 }
 
 function tweetIt(message, statusId) {
