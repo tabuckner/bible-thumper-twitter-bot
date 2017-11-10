@@ -278,11 +278,11 @@ function testArrayLength(array, limit) { //small function to test an array of st
 
 function saveTwitterData(filename, object) {
   var content = JSON.stringify(object);
-  fs.writeFile('logs/' + filename, content, 'utf8', function (err) {
+  fs.writeFile(filename, content, 'utf8', function (err) {
     if (err) {
       console.log(err)
     } else {
-      console.log('Warning: Please reivew the log file located at: logs/' + filename);
+      console.log('Warning: Please reivew the log file: ' + filename);
     }
   });
 }
