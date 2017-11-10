@@ -58,11 +58,11 @@ console.log('The bot will double check for missed followers every ' + (periodica
 console.log('');
 
 stream.on('follow', followHandler);
-// stream.on('favorite', gotAFavorite);
-// downloadImage();
-// periodicalFollowIntervalHandler();
-// setInterval(downloadImage, randomTweetInterval);
-// setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
+stream.on('favorite', gotAFavorite);
+downloadImage();
+periodicalFollowIntervalHandler();
+setInterval(downloadImage, randomTweetInterval);
+setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
 
 /* FUNCTION SECTION
 FOLLOW ACTION
