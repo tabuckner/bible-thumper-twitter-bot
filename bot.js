@@ -60,9 +60,7 @@ console.log('');
 stream.on('follow', followHandler);
 stream.on('favorite', gotAFavorite);
 downloadImage();
-periodicalFollowIntervalHandler();
 setInterval(downloadImage, randomTweetInterval);
-setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval);
 
 /* FUNCTION SECTION
 FOLLOW ACTION
@@ -287,6 +285,8 @@ function saveTwitterData(filename, object) {
   fs.writeFile('logs/' + filename, content, 'utf8', function (err) {
     if (err) {
       console.log(err)
+    } else {
+      console.log('Warning: Please reivew the log file located at: logs/' + filename);
     }
   });
 }
