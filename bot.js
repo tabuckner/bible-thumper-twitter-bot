@@ -27,9 +27,6 @@ var tParams = {
   //woeid lookup http://woeid.rosselliot.co.nz/lookup/united%20states
 }
 var tweet;
-var url = "https://labs.bible.org/api/?" +
-  "passage=random" +
-  "&type=json";
 
 //Global Vars for getting/downloading image
 var filename = 'img/1080.jpg';
@@ -38,12 +35,21 @@ var imgParams = {
 }
 var b64;
 var uploadID;
-var requestParams = {
-  url: url,
+var bibleParams = {
+  url: bibleURL,
   json: true
 }
+var bibleURL = "https://labs.bible.org/api/?" +
+  "passage=random" +
+  "&type=json";
 
-//Global Vars for Streaming ReTweet
+//Global Vars for DM responses
+var dmResponses = [];
+var dmTypingTime = 45000;
+var dmURL = "https://talaikis.com/api/quotes/";
+var message = '';
+
+//Global Vars for Streaming 
 var stream = T.stream('user');
 
 //Intervals for timed events
@@ -57,10 +63,85 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-stream.on('follow', followHandler);
-stream.on('favorite', gotAFavorite);
-downloadImage();
-setInterval(downloadImage, randomTweetInterval);
+createDMResponse('titties', '6969', 'Testing out the functionality');
+setTimeout(function () {
+  createDMResponse('titties', '6969', 'Testing out the functionality');
+}, (1.5 * 60 * 1000)); 
+// getDMResponses();
+// stream.on('direct_message', dmHandler);
+// stream.on('follow', followHandler);
+// stream.on('favorite', gotAFavorite);
+// downloadImage();
+// setInterval(downloadImage, randomTweetInterval);
+
+
+/* FUNCTION SECTION
+DIRECT MESSAGE
+*/
+
+function dmHandler(message) {
+  // saveTwitterData('dm.json', message);
+  var screen_name = message.direct_message.sender.screen_name;
+  var id_str = message.direct_message.sender.id_str;
+  message = message.direct_message.text;
+  console.log('Received a DM!');
+  console.log('User @' + screen_name + " (" + id_str + "): " + message);
+  createDMResponse(screen_name, id_str, message);
+}
+
+function createDMResponse(user, id, message) {
+  if (user !== myScreenName) {  //if the dmResponse array is empty.
+    console.log(dmResponses.length);
+    if (dmResponses.length === 0 ) { 
+      console.log('DM Response Array is not populated. Pulling a new list.');
+      getDMResponses();
+      // findDMResponse(message);
+    } else {  //if we already have some choices we can check
+      console.log('DM Response Array has values. Using current set.');
+      findDMResponse(message);
+    }
+    //see if the any of the words in their message matches the content of any element in the current random dm response array  
+    //if not check each elements category
+    //if not, redfine the array
+  }
+}
+
+function findDMResponse(message) {
+  for (i = 0; i < dmResponses.length; i++) {
+    thisCategory = dmResponses[i].cat
+    if (message.indexOf(thisCategory) < 0) {
+      console.log('Response Option ' + (i+1) + ', for ' + thisCategory + ' was not applicable');
+    } else {
+      console.log(thisCategory);
+    }
+  }
+  console.log('The current definition of dmResponses does not contain a viable category.');
+}
+
+function getDMResponses() {
+  request(dmURL, gotDMResponses);
+}
+
+function gotDMResponses(err, res, data) {
+  if (!err && res.statusCode === 200) {
+    var data = JSON.parse(data);
+    dmResponses = data;
+    console.log(dmResponses); //they are actulaly defined here
+    console.log(dmResponses.length);
+    findDMResponse(message)
+  } else if (!err) {
+    console.log('Status Code: ' + res.statusCode);
+    console.log(res.body);
+  } else {
+    console.log('Status Code: ' + res.statusCode);
+    console.log(res.body);
+  }
+}
+
+/* END FUNCTION SECTION
+DIRECT MESSAGE
+*/
+
 
 /* FUNCTION SECTION
 FOLLOW ACTION
@@ -222,7 +303,7 @@ function gotTrendingTopics(err, data, response) {
 }
 
 function getRandomBibleVerse() {
-  request(requestParams, requestHandler);
+  request(bibleParams, requestHandler);
 }
 
 function requestHandler(error, response, body) {
