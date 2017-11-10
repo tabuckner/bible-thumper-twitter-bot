@@ -62,7 +62,7 @@ stream.on('favorite', gotAFavorite);
 downloadImage();
 periodicalFollowIntervalHandler();
 setInterval(downloadImage, randomTweetInterval);
-setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval)
+setInterval(periodicalFollowIntervalHandler, periodicalFollowInterval);
 
 /* FUNCTION SECTION
 FOLLOW ACTION
