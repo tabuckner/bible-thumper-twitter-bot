@@ -6,7 +6,10 @@ var download = require('download');
 var fs = require('fs');
 var path = require('path');
 var request = require("request")
+var WordPOS = require('wordpos'),
+  wordpos = new WordPOS();
 const replyOptions = require('./replies.js');
+const deflectionOptions = require('./deflection.js');
 
 //Global vars for Tweeting
 var myScreenName = 'HillBillyNums';
@@ -47,7 +50,10 @@ var bibleURL = "https://labs.bible.org/api/?" +
 var dmResponses = [];
 var dmTypingTime = 45000;
 var dmURL = "https://talaikis.com/api/quotes/";
-var message = '';
+var usersMessage;
+var dmPullCounter = 0;
+var dmPullIterations = 5;
+// var maxDMPullIterations; //might need this when i break everything...
 
 //Global Vars for Streaming 
 var stream = T.stream('user');
@@ -63,10 +69,17 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-createDMResponse('titties', '6969', 'Testing out the functionality');
-setTimeout(function () {
+var testMsg = "Are you a real account or just a bot?";
+// var testMsg = "sports,religion,knowledge,alone,cool,sad,change,war,government,home,war,design,amazing,politics,religion,dad,parenting,science,food,food,power,home,movies,art,design,family,famous,best,teen,freedom,alone,love,war,great,family,dad,change,home,leadership,power,men,relationship,art,money,society,legal,money,famous,courage,learning,success,equality,work,strength,society,marriage,famous,finance,experience,travel,education,leadership,freedom,sports,future,communication,education,home,change,home,marriage,graduation,women,education,money,alone,respect,women,health,friendship,nature,leadership,famous,environmental,time,love,men,nature,men,experience,famous,trust,success,teacher,love,food,attitude,medical,success,money";
+// wordpos.getPOS(testMsg, function(result) {
+//   console.log(result);
+// });
+
+
+createDMResponse('titties', '6969', testMsg);
+/* setTimeout(function () {
   createDMResponse('titties', '6969', 'Testing out the functionality');
-}, (1.5 * 60 * 1000)); 
+}, (1.5 * 60 * 1000));  */
 // getDMResponses();
 // stream.on('direct_message', dmHandler);
 // stream.on('follow', followHandler);
@@ -90,12 +103,11 @@ function dmHandler(message) {
 }
 
 function createDMResponse(user, id, message) {
+  usersMessage = message.toLowerCase(); //needed to pass the users message around cause i suck at clean code.
   if (user !== myScreenName) {  //if the dmResponse array is empty.
-    console.log(dmResponses.length);
-    if (dmResponses.length === 0 ) { 
+    if (dmResponses.length === 0) {
       console.log('DM Response Array is not populated. Pulling a new list.');
       getDMResponses();
-      // findDMResponse(message);
     } else {  //if we already have some choices we can check
       console.log('DM Response Array has values. Using current set.');
       findDMResponse(message);
@@ -107,28 +119,73 @@ function createDMResponse(user, id, message) {
 }
 
 function findDMResponse(message) {
+  var noMatchSet = [];
+  var matchSet = [];
+
   for (i = 0; i < dmResponses.length; i++) {
-    thisCategory = dmResponses[i].cat
-    if (message.indexOf(thisCategory) < 0) {
-      console.log('Response Option ' + (i+1) + ', for ' + thisCategory + ' was not applicable');
+    var thisCategory = dmResponses[i].cat;
+    var thisQuote = dmResponses[i].quote;
+    var thisPair = {};
+
+    if (message.indexOf(thisCategory) === -1) {
+      noMatchSet.push(thisCategory);
     } else {
-      console.log(thisCategory);
+      thisPair = {
+        cat: thisCategory,
+        quote: thisQuote
+      }
+      matchSet.push(thisPair);
     }
   }
-  console.log('The current definition of dmResponses does not contain a viable category.');
+
+  if (matchSet.length < 1) { // if we dont have matches
+    console.log('==No Matches Found.==');
+    // console.log('Categories Attempted: ' + noMatchSet); //good for testing, but clutters shit up
+    console.log('===================');
+    if (dmPullCounter < dmPullIterations) { // if we havent reached our iteration cap
+      getDMResponses();
+    } else {
+      deflectOrContinue();
+    }
+  } else { // if we did find some matches
+    // console.log('Matches found: ' + JSON.stringify(matchSet));
+    var choice = Math.floor(Math.random() * matchSet.length);
+    console.log(matchSet[choice].quote);
+
+  }
+
+}
+
+function deflectOrContinue() { // 1/3 chance to either deflect, try again, or do nothing
+  var rand = Math.random();
+  if (rand >= (0) && rand <= (1 / 3)) { // 0 and 1/3
+    //try again
+    console.log('*****No matches found in ' + dmPullIterations + ' attempts. Starting Over*****');
+    dmPullCounter = 0;
+    getDMResponses();
+  } else if (rand >= (1 / 3) && rand <= (2 / 3)) { // 1/3 and 2/3
+    //deflect
+    console.log('*****Responding Using Deflection*****');
+    var choice = Math.floor(Math.random() * deflectionOptions.length);
+    console.log(deflectionOptions[choice]);
+  } else { // 2/3 and 1
+    //do nothing
+    console.log('*****Terminating the DM Response*****');
+  }
 }
 
 function getDMResponses() {
+  console.log('getDMResponses Pull #' + (dmPullCounter + 1));
   request(dmURL, gotDMResponses);
+  dmPullCounter++
 }
 
 function gotDMResponses(err, res, data) {
   if (!err && res.statusCode === 200) {
     var data = JSON.parse(data);
     dmResponses = data;
-    console.log(dmResponses); //they are actulaly defined here
-    console.log(dmResponses.length);
-    findDMResponse(message)
+
+    findDMResponse(usersMessage)
   } else if (!err) {
     console.log('Status Code: ' + res.statusCode);
     console.log(res.body);
