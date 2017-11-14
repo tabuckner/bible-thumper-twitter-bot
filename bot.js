@@ -5,7 +5,8 @@ var fs = require('fs');
 var download = require('download');
 var fs = require('fs');
 var path = require('path');
-var request = require("request")
+var request = require("request");
+var rp = require("request-promise-native");
 // var WordPOS = require('wordpos'),
 //   wordpos = new WordPOS();
 const replyOptions = require('./replies.js');
@@ -47,9 +48,9 @@ var bibleURL = "https://labs.bible.org/api/?" +
   "&type=json";
 
 //Global Vars for DM responses
-var dmResponses = [];
+var dmResponsesAry = [];
 var dmTypingTime = 45000;
-var dmURL = "https://talaikis.com/api/quotes/";
+var dmURL = "https://talaikis.com/api/quotes";
 var usersMessage;
 var dmPullCounter = 0;
 var dmPullIterations = 5;
@@ -115,16 +116,16 @@ function dmHandler(messageObj) {
 }
 
 function createDMResponse(user, id, message, dmUser) {
-  console.log('createDMResponse: ' + JSON.stringify(dmUser))
+  // console.log('createDMResponse: ' + JSON.stringify(dmUser))
 
   usersMessage = message.toLowerCase(); //needed to pass the users message around cause i suck at clean code.
   if (user !== myScreenName) {  //if the dmResponse array is empty.
-    if (dmResponses.length === 0) {
+    if (dmResponsesAry.length === 0) {
       console.log('DM Response Array is not populated. Pulling a new list.');
-      getDMResponses(dmUser);
+      getDMResponses(/* dmUser,  */message);
     } else {  //if we already have some choices we can check
       console.log('DM Response Array has values. Using current set.');
-      findDMResponse(message, dmUser);
+      findDMResponse(/* message, */ dmUser);
     }
     //see if the any of the words in their message matches the content of any element in the current random dm response array  
     //if not check each elements category
@@ -132,15 +133,26 @@ function createDMResponse(user, id, message, dmUser) {
   }
 }
 
-function getDMResponses(dmUser) {
-  var test = 69;
-  console.log('getDMResponses: ' + JSON.stringify(dmUser))
+function getDMResponses(/* dmUser,  */message) {
+  var message = message;
+  console.log(message);
   console.log('getDMResponses Pull #' + (dmPullCounter + 1));
-  request(dmURL, gotDMResponses);
+  // request(dmURL, gotDMResponses);
+  rp(dmURL)
+    .then(function (data) {
+      data = JSON.parse(data);
+      findPromiseResponse(data, message);
+    })
+    .catch(function (err) {
+      console.log('getDMResponses threw an error:');
+      console.log(err.name);
+      console.log(err.statusCode);
+      console.log(err);
+    });
   dmPullCounter++
 }
 
-function gotDMResponses(err, res, data) {
+/* function gotDMResponses(err, res, data) {
   if (!err && res.statusCode === 200) {
     var data = JSON.parse(data);
     dmResponses = data;
@@ -153,10 +165,49 @@ function gotDMResponses(err, res, data) {
     console.log('Status Code: ' + res.statusCode);
     console.log(res.body);
   }
+} */
+
+function findPromiseResponse (data, message) {
+  var noMatchSet = [];
+  var matchSet = [];
+
+  for (i = 0; i < data.length; i++) {
+    var thisCategory = data[i].cat;
+    var thisQuote = data[i].quote;
+    var thisPair = {};
+
+    if (message.indexOf(thisCategory) === -1) {
+      noMatchSet.push(thisCategory);
+    } else {
+      thisPair = {
+        cat: thisCategory,
+        quote: thisQuote
+      }
+      matchSet.push(thisPair);
+    }
+  }
+
+  if (matchSet.length < 1) { // if we dont have matches
+    console.log('==No Matches Found.==');
+    // console.log('Categories Attempted: ' + noMatchSet); //good for testing, but clutters shit up
+    console.log('===================');
+    if (dmPullCounter < dmPullIterations) { // if we havent reached our iteration cap
+      getDMResponses(message);
+    } else {
+      deflectOrContinue(message);
+    }
+  } else { // if we did find some matches
+    // console.log('Matches found: ' + JSON.stringify(matchSet));
+    var choice = Math.floor(Math.random() * matchSet.length);
+    console.log(matchSet[choice].quote);
+
+  }
+
 }
 
-function findDMResponse(message, dmUser) {
-  console.log('findDMResponse: ' + JSON.stringify(dmUser))
+function findDMResponse(data, message/* , dmUser */) {
+  dmResponses = data;
+  // console.log('findDMResponse: ' + JSON.stringify(dmUser))
   var noMatchSet = [];
   var matchSet = [];
 
@@ -181,9 +232,9 @@ function findDMResponse(message, dmUser) {
     // console.log('Categories Attempted: ' + noMatchSet); //good for testing, but clutters shit up
     console.log('===================');
     if (dmPullCounter < dmPullIterations) { // if we havent reached our iteration cap
-      getDMResponses(dmUser);
+      getDMResponses(message);
     } else {
-      deflectOrContinue(dmUser);
+      deflectOrContinue(message);
     }
   } else { // if we did find some matches
     // console.log('Matches found: ' + JSON.stringify(matchSet));
