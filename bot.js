@@ -7,8 +7,6 @@ var fs = require('fs');
 var path = require('path');
 var request = require("request");
 var rp = require("request-promise-native");
-// var WordPOS = require('wordpos'),
-//   wordpos = new WordPOS();
 const replyOptions = require('./replies.js');
 const deflectionOptions = require('./deflection.js');
 
@@ -39,13 +37,14 @@ var imgParams = {
 }
 var b64;
 var uploadID;
+var bibleURL = "https://labs.bible.org/api/?" +
+"passage=random" +
+"&type=json";
 var bibleParams = {
   url: bibleURL,
   json: true
 }
-var bibleURL = "https://labs.bible.org/api/?" +
-  "passage=random" +
-  "&type=json";
+
 
 //Global Vars for DM responses
 var dmResponsesAry = [];
@@ -70,29 +69,11 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-// var testMsg = "Are you a real account or just a bot?";
-var testUsr = {
-  screen_name: 'titsMcGee',
-  id_str: '6969',
-  text: 'Are you a real account or just a bot?'
-}
-var testMsg = "sports,religion,knowledge,alone,cool,sad,change,war,government,home,war,design,amazing,politics,religion,dad,parenting,science,food,food,power,home,movies,art,design,family,famous,best,teen,freedom,alone,love,war,great,family,dad,change,home,leadership,power,men,relationship,art,money,society,legal,money,famous,courage,learning,success,equality,work,strength,society,marriage,famous,finance,experience,travel,education,leadership,freedom,sports,future,communication,education,home,change,home,marriage,graduation,women,education,money,alone,respect,women,health,friendship,nature,leadership,famous,environmental,time,love,men,nature,men,experience,famous,trust,success,teacher,love,food,attitude,medical,success,money";
-// wordpos.getPOS(testMsg, function(result) {
-//   console.log(result);
-// });
-
-
-// createDMResponse(/* 'titties', '6969', testMsg,  */testUsr);
-sendDMReply(testUsr, 'Tits and ass bro.');
-/* setTimeout(function () {
-  createDMResponse('titties', '6969', 'Testing out the functionality');
-}, (1.5 * 60 * 1000));  */
-// getDMResponses();
-// stream.on('direct_message', dmHandler);
-// stream.on('follow', followHandler);
-// stream.on('favorite', gotAFavorite);
-// downloadImage();
-// setInterval(downloadImage, randomTweetInterval);
+stream.on('direct_message', dmHandler);
+stream.on('follow', followHandler);
+stream.on('favorite', gotAFavorite);
+downloadImage();
+setInterval(downloadImage, randomTweetInterval);
 
 
 /* FUNCTION SECTION
@@ -109,40 +90,35 @@ function dmHandler(messageObj) {
     id_str: id_str,
     text: message
   }
-  // console.log('dmHandler: ' + JSON.stringify(dmUser))
 
-  console.log('Received a DM!');
-  console.log('User @' + dmUser.screen_name + " (" + dmUser.id_str + "): " + dmUser.text);
-  createDMResponse(screen_name, id_str, message, dmUser);
-}
-
-function createDMResponse(/* user, id, message,  */dmUser) {
-  // console.log('createDMResponse: ' + JSON.stringify(dmUser))
-
-  // usersMessage = message.toLowerCase(); //needed to pass the users message around cause i suck at clean code.
-  if (dmUser.screen_name !== myScreenName) {  //if the dmResponse array is empty.
-    if (dmResponsesAry.length === 0) {
-      console.log('DM Response Array is empty. Pulling a new list.');
-      getDMResponses(dmUser/* , message */);
-    } else {  //if we already have some choices we can check
-      console.log('DM Response Array has values. Using current set.');
-      findPromiseResponse(/* dmUser,  */message);
-    }
-    //see if the any of the words in their message matches the content of any element in the current random dm response array  
-    //if not check each elements category
-    //if not, redfine the array
+  if (screen_name !== myScreenName) {
+    console.log('Received a DM!');
+    console.log('User @' + dmUser.screen_name + " (" + dmUser.id_str + "): " + dmUser.text);
+    createDMResponse(dmUser);
   }
 }
 
-function getDMResponses(dmUser/* , message */) {
+function createDMResponse(dmUser) {
+
+  if (dmUser.screen_name !== myScreenName) {  //if the dmResponse array is empty.
+    if (dmResponsesAry.length === 0) {
+      console.log('DM Response Array is empty. Pulling a new list.');
+      getDMResponses(dmUser);
+    } else {  //if we already have some choices we can check
+      console.log('DM Response Array has values. Using current set.');
+      dmPullCounter = 0;
+      findPromiseResponse(dmUser);
+    }
+  }
+}
+
+function getDMResponses(dmUser) {
   var message = dmUser.text;
-  console.log(message);
   console.log('getDMResponses Pull #' + (dmPullCounter + 1));
-  // request(dmURL, gotDMResponses);
   rp(dmURL)
     .then(function (data) {
       data = JSON.parse(data);
-      findPromiseResponse(data, dmUser);
+      findPromiseResponse(dmUser, data);
     })
     .catch(function (err) {
       console.log('getDMResponses threw` an error:');
@@ -153,22 +129,7 @@ function getDMResponses(dmUser/* , message */) {
   dmPullCounter++
 }
 
-/* function gotDMResponses(err, res, data) {
-  if (!err && res.statusCode === 200) {
-    var data = JSON.parse(data);
-    dmResponses = data;
-
-    findDMResponse(usersMessage)
-  } else if (!err) {
-    console.log('Status Code: ' + res.statusCode);
-    console.log(res.body);
-  } else {
-    console.log('Status Code: ' + res.statusCode);
-    console.log(res.body);
-  }
-} */
-
-function findPromiseResponse (data, dmUser) {
+function findPromiseResponse(dmUser, data) {
   var noMatchSet = [];
   var matchSet = [];
   var message = dmUser.text.toLowerCase();
@@ -191,7 +152,6 @@ function findPromiseResponse (data, dmUser) {
 
   if (matchSet.length < 1) { // if we dont have matches
     console.log('==No Matches Found.==');
-    // console.log('Categories Attempted: ' + noMatchSet); //good for testing, but clutters shit up
     console.log('===================');
     if (dmPullCounter < dmPullIterations) { // if we havent reached our iteration cap
       getDMResponses(dmUser); //take a look at this
@@ -201,16 +161,15 @@ function findPromiseResponse (data, dmUser) {
   } else { // if we did find some matches
     var selector = Math.floor(Math.random() * matchSet.length);
     var reply = matchSet[selector].quote;
-    console.log(reply); //logs out the selected response
+
+    console.log('Attempting to reply to @' + dmUser.screen_name + ' with "' + reply + '"'); //logs out the selected response
     sendDMReply(dmUser, reply);
-
   }
-
 }
 
 function deflectOrContinue(dmUser) { // 1/3 chance to either deflect, try again, or do nothing
-  // console.log('The User details we need are ' + JSON.stringify(dmUser));
   var rand = Math.random();
+
   if (rand >= (0) && rand <= (1 / 3)) { // 0 and 1/3
     //try again
     console.log('*****No matches found in ' + dmPullIterations + ' attempts. Starting Over*****');
@@ -223,9 +182,11 @@ function deflectOrContinue(dmUser) { // 1/3 chance to either deflect, try again,
     var deflection = deflectionOptions[selector];
     console.log('we should use deflection option: "' + deflection + '" as our reply text.');
     sendDMReply(dmUser, deflection);
+    dmPullCounter = 0;
   } else { // 2/3 and 1
     //do nothing
-    console.log('*****Terminating the DM Response Without a Reply*****');
+    dmPullCounter = 0;
+    console.log('*****Successfully Terminated the DM Response Without a Reply*****');
   }
 }
 
@@ -235,56 +196,19 @@ function sendDMReply(dmUserObj, reply) {
     user_id: dmUserObj.user_id,
     text: reply
   }
-  T.post('direct_messages', dmParams, sentDMReply);
+  setTimeout(function () {
+    T.post('direct_messages/new', dmParams, sentDMReply);
+  }, 1500);
+  dmPullCounter = 0;
 }
 
 function sentDMReply(err, res, data) {
-  console.log(res);
-
-}
-
-/* function findDMResponse(data, message, dmUser) {
-  dmResponses = data;
-  // console.log('findDMResponse: ' + JSON.stringify(dmUser))
-  var noMatchSet = [];
-  var matchSet = [];
-
-  for (i = 0; i < dmResponses.length; i++) {
-    var thisCategory = dmResponses[i].cat;
-    var thisQuote = dmResponses[i].quote;
-    var thisPair = {};
-
-    if (message.indexOf(thisCategory) === -1) {
-      noMatchSet.push(thisCategory);
-    } else {
-      thisPair = {
-        cat: thisCategory,
-        quote: thisQuote
-      }
-      matchSet.push(thisPair);
-    }
+  if (!err) {
+    console.log('Successfully replied to the DM.');
+  } else {
+    console.log(err);
   }
-
-  if (matchSet.length < 1) { // if we dont have matches
-    console.log('==No Matches Found.==');
-    // console.log('Categories Attempted: ' + noMatchSet); //good for testing, but clutters shit up
-    console.log('===================');
-    if (dmPullCounter < dmPullIterations) { // if we havent reached our iteration cap
-      getDMResponses(message);
-    } else {
-      deflectOrContinue(message);
-    }
-  } else { // if we did find some matches
-    // console.log('Matches found: ' + JSON.stringify(matchSet));
-    var selector = Math.floor(Math.random() * matchSet.length);
-    var deflection = matchSet[selector].quote;
-    // console.log(deflection);
-    sendDMReply(dmuser, reply);
-
-  }
-
 }
- */
 
 /* END FUNCTION SECTION
 DIRECT MESSAGE
@@ -304,6 +228,8 @@ function followHandler(eventMsg) {
     setTimeout(function () {
       followThemBack(screen_name, id_str)
     }, (30 * 1000));
+  } else {
+    console.log('');
   }
 }
 
@@ -331,6 +257,7 @@ FOLLOW ACTION
 FAVORITE ACTION
 */
 function gotAFavorite(eventMsg) {
+  saveTwitterData('favorite.json', eventMsg);
   // console.log(eventMsg.source);
   var id = eventMsg.source.id;
   var screenName = eventMsg.source.screen_name;
@@ -338,11 +265,15 @@ function gotAFavorite(eventMsg) {
   var json = JSON.stringify(eventMsg);
   // saveTwitterData('favorite.json', eventMsg);  
   console.log('Got a Favorite from: ' + screenName);
-
-  console.log('Waiting 15 seconds to send reply tweet...');
-  setTimeout(function () {
-    replyTo(screenName, statusIdStr);
-  }, 15000);
+  // console.log(eventMsg.target_object.in_reply_to_status_id);
+  if (eventMsg.target_object.in_reply_to_status_id !== null) {
+    console.log('Not replying in an attempt to avoid another account lock.');
+  } else {
+    console.log('Waiting 15 seconds to send reply tweet...');
+    setTimeout(function () {
+      replyTo(screenName, statusIdStr);
+    }, 15000);
+  }
 }
 
 function replyTo(favoriter, target) {
@@ -404,14 +335,14 @@ function downloadImage() {
 }
 
 function uploadImage() {
-  b64 = fs.readFileSync(filename, imgParams)
+  b64 = fs.readFileSync(filename, imgParams);
   T.post('media/upload', { media_data: b64 }, uploaded);
 }
 
 function uploaded(err, data, response) {
   console.log('Uploaded the image');
   uploadID = data.media_id_string;
-  console.log(uploadID);
+  console.log('Upload ID is: ' + uploadID);
   getTrendingTopics();
 }
 
@@ -428,26 +359,29 @@ function getTrendingTopics() {
 }
 
 function gotTrendingTopics(err, data, response) {
-  //console.log(data);
-  var trends = data[0].trends;
-  for (i = 0; i < trends.length; i++) {
-    var name = trends[i].name;
-    var volume = trends[i].tweet_volume;
-    if (volume !== null && name.includes('#')) {
-      var obj = {
-        "name": name,
-        "volume": volume
-      };
-      tCleanedArray.push(obj); //push to an array to be analyzed. 
+  if (!err) {
+    var trends = data[0].trends;
+    for (i = 0; i < trends.length; i++) {
+      var name = trends[i].name;
+      var volume = trends[i].tweet_volume;
+      if (volume !== null && name.includes('#')) {
+        var obj = {
+          "name": name,
+          "volume": volume
+        };
+        tCleanedArray.push(obj); //push to an array to be analyzed. 
+      }
     }
+    //pick out the top trending at that moment and log
+    tCleanedArray.sort(function (b, a) {
+      return a.volume - b.volume
+    });
+    topTrend = tCleanedArray[0];
+    topHash = topTrend.name;
+    getRandomBibleVerse();
+  } else {
+    saveTwitterData(err);
   }
-  //pick out the top trending at that moment and log
-  tCleanedArray.sort(function (b, a) {
-    return a.volume - b.volume
-  });
-  topTrend = tCleanedArray[0];
-  topHash = topTrend.name;
-  getRandomBibleVerse();
 }
 
 function getRandomBibleVerse() {
@@ -472,6 +406,8 @@ function requestHandler(error, response, body) {
     }
     // console.log(tweet); //did we get the tweet object?
     T.post('statuses/update', tweet, tweeted);
+  } else {
+    console.log(error);
   }
 }
 
