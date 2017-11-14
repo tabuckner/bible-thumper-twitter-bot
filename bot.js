@@ -6,8 +6,8 @@ var download = require('download');
 var fs = require('fs');
 var path = require('path');
 var request = require("request")
-var WordPOS = require('wordpos'),
-  wordpos = new WordPOS();
+// var WordPOS = require('wordpos'),
+//   wordpos = new WordPOS();
 const replyOptions = require('./replies.js');
 const deflectionOptions = require('./deflection.js');
 
@@ -70,13 +70,18 @@ console.log('The bot will double check for missed followers every ' + (periodica
 console.log('');
 
 var testMsg = "Are you a real account or just a bot?";
+var testUsr = {
+  screenName: 'titsMcGee',
+  idStr: '6969',
+  dmMessage: 'Are you a real account or just a bot?'
+}
 // var testMsg = "sports,religion,knowledge,alone,cool,sad,change,war,government,home,war,design,amazing,politics,religion,dad,parenting,science,food,food,power,home,movies,art,design,family,famous,best,teen,freedom,alone,love,war,great,family,dad,change,home,leadership,power,men,relationship,art,money,society,legal,money,famous,courage,learning,success,equality,work,strength,society,marriage,famous,finance,experience,travel,education,leadership,freedom,sports,future,communication,education,home,change,home,marriage,graduation,women,education,money,alone,respect,women,health,friendship,nature,leadership,famous,environmental,time,love,men,nature,men,experience,famous,trust,success,teacher,love,food,attitude,medical,success,money";
 // wordpos.getPOS(testMsg, function(result) {
 //   console.log(result);
 // });
 
 
-createDMResponse('titties', '6969', testMsg);
+createDMResponse('titties', '6969', testMsg, testUsr);
 /* setTimeout(function () {
   createDMResponse('titties', '6969', 'Testing out the functionality');
 }, (1.5 * 60 * 1000));  */
@@ -92,25 +97,34 @@ createDMResponse('titties', '6969', testMsg);
 DIRECT MESSAGE
 */
 
-function dmHandler(message) {
+function dmHandler(messageObj) {
   // saveTwitterData('dm.json', message);
-  var screen_name = message.direct_message.sender.screen_name;
-  var id_str = message.direct_message.sender.id_str;
-  message = message.direct_message.text;
+  var screen_name = messageObj.direct_message.sender.screen_name;
+  var id_str = messageObj.direct_message.sender.id_str;
+  var message = messageObj.direct_message.text;
+  var dmUser = {
+    screenName: screen_name,
+    idStr: id_str,
+    dmMessage: message
+  }
+  console.log('dmHandler: ' + JSON.stringify(dmUser))
+
   console.log('Received a DM!');
   console.log('User @' + screen_name + " (" + id_str + "): " + message);
-  createDMResponse(screen_name, id_str, message);
+  createDMResponse(screen_name, id_str, message, dmUser);
 }
 
-function createDMResponse(user, id, message) {
+function createDMResponse(user, id, message, dmUser) {
+  console.log('createDMResponse: ' + JSON.stringify(dmUser))
+
   usersMessage = message.toLowerCase(); //needed to pass the users message around cause i suck at clean code.
   if (user !== myScreenName) {  //if the dmResponse array is empty.
     if (dmResponses.length === 0) {
       console.log('DM Response Array is not populated. Pulling a new list.');
-      getDMResponses();
+      getDMResponses(dmUser);
     } else {  //if we already have some choices we can check
       console.log('DM Response Array has values. Using current set.');
-      findDMResponse(message);
+      findDMResponse(message, dmUser);
     }
     //see if the any of the words in their message matches the content of any element in the current random dm response array  
     //if not check each elements category
@@ -118,7 +132,31 @@ function createDMResponse(user, id, message) {
   }
 }
 
-function findDMResponse(message) {
+function getDMResponses(dmUser) {
+  var test = 69;
+  console.log('getDMResponses: ' + JSON.stringify(dmUser))
+  console.log('getDMResponses Pull #' + (dmPullCounter + 1));
+  request(dmURL, gotDMResponses);
+  dmPullCounter++
+}
+
+function gotDMResponses(err, res, data) {
+  if (!err && res.statusCode === 200) {
+    var data = JSON.parse(data);
+    dmResponses = data;
+
+    findDMResponse(usersMessage)
+  } else if (!err) {
+    console.log('Status Code: ' + res.statusCode);
+    console.log(res.body);
+  } else {
+    console.log('Status Code: ' + res.statusCode);
+    console.log(res.body);
+  }
+}
+
+function findDMResponse(message, dmUser) {
+  console.log('findDMResponse: ' + JSON.stringify(dmUser))
   var noMatchSet = [];
   var matchSet = [];
 
@@ -143,9 +181,9 @@ function findDMResponse(message) {
     // console.log('Categories Attempted: ' + noMatchSet); //good for testing, but clutters shit up
     console.log('===================');
     if (dmPullCounter < dmPullIterations) { // if we havent reached our iteration cap
-      getDMResponses();
+      getDMResponses(dmUser);
     } else {
-      deflectOrContinue();
+      deflectOrContinue(dmUser);
     }
   } else { // if we did find some matches
     // console.log('Matches found: ' + JSON.stringify(matchSet));
@@ -156,13 +194,14 @@ function findDMResponse(message) {
 
 }
 
-function deflectOrContinue() { // 1/3 chance to either deflect, try again, or do nothing
+function deflectOrContinue(dmUser) { // 1/3 chance to either deflect, try again, or do nothing
+  console.log('The User details we need are ' + JSON.stringify(dmUser));
   var rand = Math.random();
   if (rand >= (0) && rand <= (1 / 3)) { // 0 and 1/3
     //try again
     console.log('*****No matches found in ' + dmPullIterations + ' attempts. Starting Over*****');
     dmPullCounter = 0;
-    getDMResponses();
+    getDMResponses(dmUser);
   } else if (rand >= (1 / 3) && rand <= (2 / 3)) { // 1/3 and 2/3
     //deflect
     console.log('*****Responding Using Deflection*****');
@@ -171,27 +210,6 @@ function deflectOrContinue() { // 1/3 chance to either deflect, try again, or do
   } else { // 2/3 and 1
     //do nothing
     console.log('*****Terminating the DM Response*****');
-  }
-}
-
-function getDMResponses() {
-  console.log('getDMResponses Pull #' + (dmPullCounter + 1));
-  request(dmURL, gotDMResponses);
-  dmPullCounter++
-}
-
-function gotDMResponses(err, res, data) {
-  if (!err && res.statusCode === 200) {
-    var data = JSON.parse(data);
-    dmResponses = data;
-
-    findDMResponse(usersMessage)
-  } else if (!err) {
-    console.log('Status Code: ' + res.statusCode);
-    console.log(res.body);
-  } else {
-    console.log('Status Code: ' + res.statusCode);
-    console.log(res.body);
   }
 }
 
