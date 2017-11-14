@@ -70,19 +70,20 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-var testMsg = "Are you a real account or just a bot?";
+// var testMsg = "Are you a real account or just a bot?";
 var testUsr = {
-  screenName: 'titsMcGee',
-  idStr: '6969',
-  dmMessage: 'Are you a real account or just a bot?'
+  screen_name: 'titsMcGee',
+  id_str: '6969',
+  text: 'Are you a real account or just a bot?'
 }
-// var testMsg = "sports,religion,knowledge,alone,cool,sad,change,war,government,home,war,design,amazing,politics,religion,dad,parenting,science,food,food,power,home,movies,art,design,family,famous,best,teen,freedom,alone,love,war,great,family,dad,change,home,leadership,power,men,relationship,art,money,society,legal,money,famous,courage,learning,success,equality,work,strength,society,marriage,famous,finance,experience,travel,education,leadership,freedom,sports,future,communication,education,home,change,home,marriage,graduation,women,education,money,alone,respect,women,health,friendship,nature,leadership,famous,environmental,time,love,men,nature,men,experience,famous,trust,success,teacher,love,food,attitude,medical,success,money";
+var testMsg = "sports,religion,knowledge,alone,cool,sad,change,war,government,home,war,design,amazing,politics,religion,dad,parenting,science,food,food,power,home,movies,art,design,family,famous,best,teen,freedom,alone,love,war,great,family,dad,change,home,leadership,power,men,relationship,art,money,society,legal,money,famous,courage,learning,success,equality,work,strength,society,marriage,famous,finance,experience,travel,education,leadership,freedom,sports,future,communication,education,home,change,home,marriage,graduation,women,education,money,alone,respect,women,health,friendship,nature,leadership,famous,environmental,time,love,men,nature,men,experience,famous,trust,success,teacher,love,food,attitude,medical,success,money";
 // wordpos.getPOS(testMsg, function(result) {
 //   console.log(result);
 // });
 
 
-createDMResponse('titties', '6969', testMsg, testUsr);
+// createDMResponse(/* 'titties', '6969', testMsg,  */testUsr);
+sendDMReply(testUsr, 'Tits and ass bro.');
 /* setTimeout(function () {
   createDMResponse('titties', '6969', 'Testing out the functionality');
 }, (1.5 * 60 * 1000));  */
@@ -104,28 +105,28 @@ function dmHandler(messageObj) {
   var id_str = messageObj.direct_message.sender.id_str;
   var message = messageObj.direct_message.text;
   var dmUser = {
-    screenName: screen_name,
-    idStr: id_str,
-    dmMessage: message
+    screen_name: screen_name,
+    id_str: id_str,
+    text: message
   }
-  console.log('dmHandler: ' + JSON.stringify(dmUser))
+  // console.log('dmHandler: ' + JSON.stringify(dmUser))
 
   console.log('Received a DM!');
-  console.log('User @' + screen_name + " (" + id_str + "): " + message);
+  console.log('User @' + dmUser.screen_name + " (" + dmUser.id_str + "): " + dmUser.text);
   createDMResponse(screen_name, id_str, message, dmUser);
 }
 
-function createDMResponse(user, id, message, dmUser) {
+function createDMResponse(/* user, id, message,  */dmUser) {
   // console.log('createDMResponse: ' + JSON.stringify(dmUser))
 
-  usersMessage = message.toLowerCase(); //needed to pass the users message around cause i suck at clean code.
-  if (user !== myScreenName) {  //if the dmResponse array is empty.
+  // usersMessage = message.toLowerCase(); //needed to pass the users message around cause i suck at clean code.
+  if (dmUser.screen_name !== myScreenName) {  //if the dmResponse array is empty.
     if (dmResponsesAry.length === 0) {
-      console.log('DM Response Array is not populated. Pulling a new list.');
-      getDMResponses(/* dmUser,  */message);
+      console.log('DM Response Array is empty. Pulling a new list.');
+      getDMResponses(dmUser/* , message */);
     } else {  //if we already have some choices we can check
       console.log('DM Response Array has values. Using current set.');
-      findDMResponse(/* message, */ dmUser);
+      findPromiseResponse(/* dmUser,  */message);
     }
     //see if the any of the words in their message matches the content of any element in the current random dm response array  
     //if not check each elements category
@@ -133,18 +134,18 @@ function createDMResponse(user, id, message, dmUser) {
   }
 }
 
-function getDMResponses(/* dmUser,  */message) {
-  var message = message;
+function getDMResponses(dmUser/* , message */) {
+  var message = dmUser.text;
   console.log(message);
   console.log('getDMResponses Pull #' + (dmPullCounter + 1));
   // request(dmURL, gotDMResponses);
   rp(dmURL)
     .then(function (data) {
       data = JSON.parse(data);
-      findPromiseResponse(data, message);
+      findPromiseResponse(data, dmUser);
     })
     .catch(function (err) {
-      console.log('getDMResponses threw an error:');
+      console.log('getDMResponses threw` an error:');
       console.log(err.name);
       console.log(err.statusCode);
       console.log(err);
@@ -167,9 +168,10 @@ function getDMResponses(/* dmUser,  */message) {
   }
 } */
 
-function findPromiseResponse (data, message) {
+function findPromiseResponse (data, dmUser) {
   var noMatchSet = [];
   var matchSet = [];
+  var message = dmUser.text.toLowerCase();
 
   for (i = 0; i < data.length; i++) {
     var thisCategory = data[i].cat;
@@ -192,20 +194,56 @@ function findPromiseResponse (data, message) {
     // console.log('Categories Attempted: ' + noMatchSet); //good for testing, but clutters shit up
     console.log('===================');
     if (dmPullCounter < dmPullIterations) { // if we havent reached our iteration cap
-      getDMResponses(message);
+      getDMResponses(dmUser); //take a look at this
     } else {
-      deflectOrContinue(message);
+      deflectOrContinue(dmUser);
     }
   } else { // if we did find some matches
-    // console.log('Matches found: ' + JSON.stringify(matchSet));
-    var choice = Math.floor(Math.random() * matchSet.length);
-    console.log(matchSet[choice].quote);
+    var selector = Math.floor(Math.random() * matchSet.length);
+    var reply = matchSet[selector].quote;
+    console.log(reply); //logs out the selected response
+    sendDMReply(dmUser, reply);
 
   }
 
 }
 
-function findDMResponse(data, message/* , dmUser */) {
+function deflectOrContinue(dmUser) { // 1/3 chance to either deflect, try again, or do nothing
+  // console.log('The User details we need are ' + JSON.stringify(dmUser));
+  var rand = Math.random();
+  if (rand >= (0) && rand <= (1 / 3)) { // 0 and 1/3
+    //try again
+    console.log('*****No matches found in ' + dmPullIterations + ' attempts. Starting Over*****');
+    dmPullCounter = 0;
+    getDMResponses(dmUser);
+  } else if (rand >= (1 / 3) && rand <= (2 / 3)) { // 1/3 and 2/3
+    //deflect
+    console.log('*****Responding Using Deflection*****');
+    var selector = Math.floor(Math.random() * deflectionOptions.length);
+    var deflection = deflectionOptions[selector];
+    console.log('we should use deflection option: "' + deflection + '" as our reply text.');
+    sendDMReply(dmUser, deflection);
+  } else { // 2/3 and 1
+    //do nothing
+    console.log('*****Terminating the DM Response Without a Reply*****');
+  }
+}
+
+function sendDMReply(dmUserObj, reply) {
+  var dmParams = {
+    screen_name: dmUserObj.screen_name,
+    user_id: dmUserObj.user_id,
+    text: reply
+  }
+  T.post('direct_messages', dmParams, sentDMReply);
+}
+
+function sentDMReply(err, res, data) {
+  console.log(res);
+
+}
+
+/* function findDMResponse(data, message, dmUser) {
   dmResponses = data;
   // console.log('findDMResponse: ' + JSON.stringify(dmUser))
   var noMatchSet = [];
@@ -238,31 +276,15 @@ function findDMResponse(data, message/* , dmUser */) {
     }
   } else { // if we did find some matches
     // console.log('Matches found: ' + JSON.stringify(matchSet));
-    var choice = Math.floor(Math.random() * matchSet.length);
-    console.log(matchSet[choice].quote);
+    var selector = Math.floor(Math.random() * matchSet.length);
+    var deflection = matchSet[selector].quote;
+    // console.log(deflection);
+    sendDMReply(dmuser, reply);
 
   }
 
 }
-
-function deflectOrContinue(dmUser) { // 1/3 chance to either deflect, try again, or do nothing
-  console.log('The User details we need are ' + JSON.stringify(dmUser));
-  var rand = Math.random();
-  if (rand >= (0) && rand <= (1 / 3)) { // 0 and 1/3
-    //try again
-    console.log('*****No matches found in ' + dmPullIterations + ' attempts. Starting Over*****');
-    dmPullCounter = 0;
-    getDMResponses(dmUser);
-  } else if (rand >= (1 / 3) && rand <= (2 / 3)) { // 1/3 and 2/3
-    //deflect
-    console.log('*****Responding Using Deflection*****');
-    var choice = Math.floor(Math.random() * deflectionOptions.length);
-    console.log(deflectionOptions[choice]);
-  } else { // 2/3 and 1
-    //do nothing
-    console.log('*****Terminating the DM Response*****');
-  }
-}
+ */
 
 /* END FUNCTION SECTION
 DIRECT MESSAGE
