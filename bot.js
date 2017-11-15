@@ -1,5 +1,5 @@
 var Twit = require('twit');
-var config = require('./config');
+var config = require('./static/config');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var fs = require('fs');
 var download = require('download');
@@ -7,8 +7,8 @@ var fs = require('fs');
 var path = require('path');
 var request = require("request");
 var rp = require("request-promise-native");
-const replyOptions = require('./replies.js');
-const deflectionOptions = require('./deflection.js');
+const replyOptions = require('./static/replies.js');
+const deflectionOptions = require('./static/deflection.js');
 
 //Global vars for Tweeting
 var myScreenName = 'HillBillyNums';
