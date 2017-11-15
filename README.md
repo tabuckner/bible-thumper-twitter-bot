@@ -40,7 +40,7 @@ MORE INFO TO COME
 
 ## Built With
 
-* [twit](hhttps://www.npmjs.com/package/twit) - Twitter API for Node
+* [twit](https://www.npmjs.com/package/twit) - Twitter API for Node
 * [request-promise-native](https://www.npmjs.com/package/request-promise-native) - ES6 Styled Promises for Request
 * [download](https://www.npmjs.com/package/download) - Used to download the images for the bible verse tweets
 
