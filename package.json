@@ -20,7 +20,6 @@
     "download": "^6.2.5",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
-    "twit": "^2.2.9",
-    "xmlhttprequest": "^1.8.0"
+    "twit": "^2.2.9"
   }
 }

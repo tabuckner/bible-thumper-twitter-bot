@@ -1,5 +1,7 @@
 const replyOptions = require('./static/replies.js');
 
+var favoriteResponse;
+
 /* FUNCTION SECTION
 FAVORITE ACTION
 */
