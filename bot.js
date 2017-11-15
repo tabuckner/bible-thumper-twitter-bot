@@ -11,6 +11,7 @@ const replyOptions = require('./static/replies.js');
 // const deflectionOptions = require('./static/deflection.js'); //migrated these to direct-message.js
 
 const dm = require('./direct-message.js');
+const f = require('./follow.js');
 
 //Global vars for Tweeting
 /* var  */myScreenName = 'HillBillyNums';
@@ -40,8 +41,8 @@ var imgParams = {
 var b64;
 var uploadID;
 var bibleURL = "https://labs.bible.org/api/?" +
-"passage=random" +
-"&type=json";
+  "passage=random" +
+  "&type=json";
 var bibleParams = {
   url: bibleURL,
   json: true
@@ -70,8 +71,8 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-stream.on('direct_message', dm.dmHandler);
-// stream.on('follow', followHandler);
+// stream.on('direct_message', dm.dmHandler);
+stream.on('follow', f.followHandler);
 // stream.on('favorite', gotAFavorite);
 // downloadImage();
 // setInterval(downloadImage, randomTweetInterval);
@@ -219,7 +220,7 @@ DIRECT MESSAGE
 FOLLOW ACTION
 */
 
-function followHandler(eventMsg) {
+/* function followHandler(eventMsg) {
   var screen_name = eventMsg.source.screen_name;
   var id_str = eventMsg.source.id_str;
 
@@ -246,7 +247,7 @@ function followThemBack(screenName, idStr) {
       console.log(response);
     }
   })
-}
+} */
 
 /* END FUNCTION SECTION
 FOLLOW ACTION
