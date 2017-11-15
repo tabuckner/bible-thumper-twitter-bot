@@ -71,7 +71,7 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-// stream.on('direct_message', dm.dmHandler);
+stream.on('direct_message', dm.dmHandler);
 stream.on('follow', f.followHandler);
 // stream.on('favorite', gotAFavorite);
 // downloadImage();
@@ -216,7 +216,7 @@ DIRECT MESSAGE
 */
 
 
-/* FUNCTION SECTION
+/* FUNCTION SECTION //migrated to follow.js
 FOLLOW ACTION
 */
 
