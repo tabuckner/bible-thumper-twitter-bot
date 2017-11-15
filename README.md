@@ -58,5 +58,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* *Sensei* - Andrew Atwood  
+* *Sensei* - Andrew Atwood  - [andrewatwood](https://github.com/andrewatwood)
 * *Inspiration* - Daniel Shiffman - [shiffman](https://github.com/shiffman)
