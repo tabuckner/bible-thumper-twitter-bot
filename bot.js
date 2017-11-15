@@ -6,14 +6,16 @@ var download = require('download');
 var fs = require('fs');
 var path = require('path');
 var request = require("request");
-var rp = require("request-promise-native");
+// var rp = require("request-promise-native"); //migrated these to direct-message.js
 const replyOptions = require('./static/replies.js');
-const deflectionOptions = require('./static/deflection.js');
+// const deflectionOptions = require('./static/deflection.js'); //migrated these to direct-message.js
+
+const dm = require('./direct-message.js');
 
 //Global vars for Tweeting
-var myScreenName = 'HillBillyNums';
+/* var  */myScreenName = 'HillBillyNums';
 var typingTime = 3000;
-var T = new Twit(config);
+/* var  */T = new Twit(config);
 var verse;
 var favoriteResponse;
 var sParfams = {
@@ -45,13 +47,13 @@ var bibleParams = {
   json: true
 }
 
-//Global Vars for DM responses
-var dmResponsesAry = [];
+//Global Vars for DM responses //migrated these to direct-message.js
+/* var dmResponsesAry = [];
 var dmTypingTime = 45000;
 var dmURL = "https://talaikis.com/api/quotes";
 var usersMessage;
 var dmPullCounter = 0;
-var dmPullIterations = 5;
+var dmPullIterations = 5; */
 // var maxDMPullIterations; //might need this when i break everything...
 
 //Global Vars for Streaming 
@@ -68,18 +70,18 @@ console.log('The tweets will go out once every ' + (randomTweetInterval / (1000 
 console.log('The bot will double check for missed followers every ' + (periodicalFollowInterval / hourMultiplier) + " hour(s)");
 console.log('');
 
-stream.on('direct_message', dmHandler);
-stream.on('follow', followHandler);
-stream.on('favorite', gotAFavorite);
-downloadImage();
-setInterval(downloadImage, randomTweetInterval);
+stream.on('direct_message', dm.dmHandler);
+// stream.on('follow', followHandler);
+// stream.on('favorite', gotAFavorite);
+// downloadImage();
+// setInterval(downloadImage, randomTweetInterval);
 
 
-/* FUNCTION SECTION
+/* FUNCTION SECTION //migrated these to direct-message.js
 DIRECT MESSAGE
 */
 
-function dmHandler(messageObj) {
+/* function dmHandler(messageObj) {
   var screen_name = messageObj.direct_message.sender.screen_name;
   var id_str = messageObj.direct_message.sender.id_str;
   var message = messageObj.direct_message.text;
@@ -206,7 +208,7 @@ function sentDMReply(err, res, data) {
   } else {
     console.log(err);
   }
-}
+} */
 
 /* END FUNCTION SECTION
 DIRECT MESSAGE
