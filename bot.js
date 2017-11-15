@@ -45,7 +45,6 @@ var bibleParams = {
   json: true
 }
 
-
 //Global Vars for DM responses
 var dmResponsesAry = [];
 var dmTypingTime = 45000;
@@ -81,7 +80,6 @@ DIRECT MESSAGE
 */
 
 function dmHandler(messageObj) {
-  // saveTwitterData('dm.json', message);
   var screen_name = messageObj.direct_message.sender.screen_name;
   var id_str = messageObj.direct_message.sender.id_str;
   var message = messageObj.direct_message.text;
@@ -224,10 +222,10 @@ function followHandler(eventMsg) {
   var id_str = eventMsg.source.id_str;
 
   if (screen_name !== myScreenName) {
-    console.log(screen_name + ' is a now a follower! Attempting to follow back. in 30 seconds.');
+    console.log(screen_name + ' is a now a follower! Attempting to follow back in 10 seconds.');
     setTimeout(function () {
       followThemBack(screen_name, id_str)
-    }, (30 * 1000));
+    }, (10 * 1000));
   } else {
     console.log('');
   }
@@ -240,10 +238,9 @@ function followThemBack(screenName, idStr) {
         console.log('We are now following ' + data.screen_name);
       }
       console.log('')
-      saveTwitterData('followBackData.json', data);
     } else if (err) {
-      saveTwitterData('followBackError.json', err);
     } else {
+      console.log('Unexpected outcome at followThemBack:');
       console.log(response);
     }
   })
@@ -257,15 +254,12 @@ FOLLOW ACTION
 FAVORITE ACTION
 */
 function gotAFavorite(eventMsg) {
-  saveTwitterData('favorite.json', eventMsg);
-  // console.log(eventMsg.source);
   var id = eventMsg.source.id;
   var screenName = eventMsg.source.screen_name;
   var statusIdStr = eventMsg.target_object.id_str;
   var json = JSON.stringify(eventMsg);
-  // saveTwitterData('favorite.json', eventMsg);  
+
   console.log('Got a Favorite from: ' + screenName);
-  // console.log(eventMsg.target_object.in_reply_to_status_id);
   if (eventMsg.target_object.in_reply_to_status_id !== null) {
     console.log('Not replying in an attempt to avoid another account lock.');
   } else {
@@ -277,7 +271,6 @@ function gotAFavorite(eventMsg) {
 }
 
 function replyTo(favoriter, target) {
-  const replyOptions = require('./replies.js');
 
   if (favoriter !== myScreenName) {
     favoriteResponse = "@" + favoriter + " ";
@@ -392,19 +385,16 @@ function requestHandler(error, response, body) {
 
   if (!error && response.statusCode === 200) {
     var verseObject = body[0];
-    // console.log(verseObject) // Print the object of json response
     var verseBook = verseObject.bookname;
     var verseChapter = verseObject.chapter;
     var verseVerse = verseObject.verse;
     var verseText = verseObject.text;
     var versePosition = verseBook + " " + verseChapter + ":" + verseVerse;
     verse = versePosition + " // " + verseText + " " + topHash;
-    // console.log(verse); //used for testing
     tweet = {
       status: verse,
       media_ids: uploadID
     }
-    // console.log(tweet); //did we get the tweet object?
     T.post('statuses/update', tweet, tweeted);
   } else {
     console.log(error);
@@ -414,7 +404,6 @@ function requestHandler(error, response, body) {
 function tweeted(err, data, response) {
   if (err) {
     console.log('Something went wrong: ' + err);
-    // testErr(err);
     getTrendingTopics();
   } else {
     console.log('It worked!');
@@ -427,7 +416,7 @@ Random Bible Verse Tweet
 */
 
 //TOOLS
-function testArrayLength(array, limit) { //small function to test an array of strings for a char limit (e.g. Twitter's 140)
+function testArrayLength(array, limit) { //small function to test an array of strings for a char limit (e.g. Twitter's 280)
   for (i = 0; i < array.length; i++) {
     if (array[i].length > limit) {
       console.log('--------------');
