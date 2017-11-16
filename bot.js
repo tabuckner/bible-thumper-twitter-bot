@@ -8,7 +8,7 @@ const rb = require('./modules/verse.js');
 
 
 //Global vars for Tweeting
-myScreenName = 'HillBillyNums';
+myScreenName = 'YOUR_SCREEN_NAME';
 T = new Twit(config);
 
 //Vars called on bot.js
